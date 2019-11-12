@@ -9,11 +9,12 @@ class TableList extends Component {
   state = {tdArray: []};
 
   componentDidMount(){
+    this.getData();
     this.timer = setInterval(()=> this.getData(), 2000)
   }
 
   async getData(){
-    fetch("http://192.168.0.99/sist-distribuidos/api/data/last?limit=20")
+    fetch("http://192.168.1.204/sist-distribuidos/api/data/last?limit=20")
     .then(response => {
       return response.json()
     })

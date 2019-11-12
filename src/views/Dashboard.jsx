@@ -5,10 +5,8 @@ import { Grid, Row, Col } from "react-bootstrap";
 import { Card } from "components/Card/Card.jsx";
 import { StatsCard } from "components/StatsCard/StatsCard.jsx";
 import {
-  dataSales,
   optionsSales,
   responsiveSales,
-  dataBar,
   optionsBar,
   responsiveBar
 } from "variables/Variables.jsx";
@@ -50,15 +48,24 @@ class Dashboard extends Component {
         [],
         []
       ]
+    },
+    avgMonthTemperature: {},
+    avgMonthHumidty: {},
+    dataBar: {
+      labels: [],
+      series: [
+        [],[]
+      ]
     }
   };
 
   componentDidMount() {
+    this.getData();
     this.timer = setInterval(() => this.getData(), 5000)
   }
 
   async getData() {
-    fetch("http://192.168.0.99/sist-distribuidos/api/data/last")
+    fetch("http://192.168.1.204/sist-distribuidos/api/data/last")
       .then(response => {
         return response.json()
       })
@@ -73,7 +80,37 @@ class Dashboard extends Component {
         console.log(error);
       });
 
-    fetch("http://192.168.0.99/sist-distribuidos/api/data/hour_average")
+      fetch("http://192.168.1.204/sist-distribuidos/api/data/day_average")
+      .then(response => {
+        return response.json()
+      })
+      .then(data => {
+        var days = [];
+        var temps = [];
+        var hums = [];
+        
+        for(var i in data.data) {
+          days.push(i);
+          hums.push(data.data[i].humidity);
+          temps.push(data.data[i].temperature);
+        }
+
+        var tmp = {
+          labels: days,
+          series: [
+            hums, temps
+          ]
+        };
+
+        this.setState({
+          dataBar: tmp
+        })
+      }
+      ).catch(function (error) {
+        console.log(error);
+      });  
+
+    fetch("http://192.168.1.204/sist-distribuidos/api/data/hour_average")
       .then(response => {
         return response.json()
       })
@@ -93,22 +130,21 @@ class Dashboard extends Component {
         var tmp = {
           labels: this.state.graphMeasures.labels,
           series: [
-            temperatures,
-            humidities
+            humidities,
+            temperatures
           ]
         };
-
-        console.log(tmp);
 
         this.setState({
           graphMeasures: tmp
         })
-
-        var teste = {temperatures}
       }
       ).catch(function (error) {
         console.log(error);
       });  
+    
+
+      
   }
   render() {
     return (
@@ -142,7 +178,7 @@ class Dashboard extends Component {
                 id="chartHours"
                 title="Temperatura e Umidade média por hora"
                 category="24 Hours performance"
-                stats={"Atualizado as"}
+                stats={"Ultimo Registro: "+ this.state.last_measure}
                 content={
                   <div className="ct-chart">
                     <ChartistGraph
@@ -155,36 +191,17 @@ class Dashboard extends Component {
                 }
               />
             </Col>
-            {/* <Col md={4}>
-              <Card
-                statsIcon="fa fa-clock-o"
-                title="Email Statistics"
-                category="Last Campaign Performance"
-                stats="Campaign sent 2 days ago"
-                content={
-                  <div
-                    id="chartPreferences"
-                    className="ct-chart ct-perfect-fourth"
-                  >
-                    <ChartistGraph data={dataPie} type="Pie" />
-                  </div>
-                }
-              />
-            </Col> */}
           </Row>
-          {/* end gráficos */}
           <Row>
             <Col md={13}>
               <Card
                 id="chartActivity"
-                title="2014 Sales"
-                category="All products including Taxes"
-                stats="Data information certified"
-                statsIcon="fa fa-check"
+                title="Maior Temperatura e Umidade por Dia"
+                category="Todos os dias do Mês"
                 content={
                   <div className="ct-chart">
                     <ChartistGraph
-                      data={dataBar}
+                      data={this.state.dataBar}
                       type="Bar"
                       options={optionsBar}
                       responsiveOptions={responsiveBar}
@@ -194,6 +211,7 @@ class Dashboard extends Component {
               />
             </Col>
           </Row>
+          {/* end gráficos */}
         </Grid>
       </div>
     );
